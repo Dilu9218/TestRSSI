@@ -15,6 +15,14 @@ import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.TextView;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Calendar;
+import java.util.Timer;
+import java.util.TimerTask;
+
 public class MainActivity extends AppCompatActivity {
 
     @Override
@@ -37,7 +45,21 @@ public class MainActivity extends AppCompatActivity {
         b.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                new Updation().execute();
+
+                Timer t = new Timer();
+                t.scheduleAtFixedRate(new TimerTask() {
+
+                                          @Override
+                                          public void run() {
+                                              //Called each time when 1000 milliseconds (1 second) (the period parameter)
+                                              new Updation().execute();
+                                          }
+
+                                      },
+//Set how long before to start calling the TimerTask (in milliseconds)
+                        0,
+//Set the amount of time between each execution (in milliseconds)
+                        5000);
             }
         });
     }
@@ -63,7 +85,19 @@ public class MainActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+/*
+    //Declare the timer
+    Timer t = new Timer();
+    //Set the schedule function and rate
+    t.scheduleAtFixedRate(new TimerTask() {
 
+        @Override
+        public void run() {
+            //Called each time when 1000 milliseconds (1 second) (the period parameter)
+        }
+
+    }, 0, 1000);
+*/
     public String UpdateRSSI(){
         WifiManager wifi = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         String fullpath="";
@@ -78,17 +112,29 @@ public class MainActivity extends AppCompatActivity {
         //textStatus.append("\n" + ssid0 + "   " + rssiString0);
     }
 
+    public void WriteFile(String s,Context context){
+        //Context context = this;
+        File path = context.getExternalFilesDir(null);
+
+
+    }
+
     class Updation extends AsyncTask <Void,Integer,String>{
 
         @Override
         protected String doInBackground(Void... voids) {
-            return UpdateRSSI();
+            String re= UpdateRSSI();
+
+
+            return re;
         }
 
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
             TextView tv=(TextView)findViewById(R.id.res);
+            s=s+"\n"+Calendar.getInstance().getTime().toString();
+            WriteFile(s,getApplicationContext());
             tv.setText(s);
 
         }
