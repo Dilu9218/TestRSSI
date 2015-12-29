@@ -5,6 +5,7 @@ import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -14,10 +15,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.Timer;
@@ -114,29 +117,73 @@ public class MainActivity extends AppCompatActivity {
 
     public void WriteFile(String s,Context context){
         //Context context = this;
-        File path = context.getExternalFilesDir(null);
+        File path = context.getExternalFilesDir("DCIM");
+        if(path.exists()) {
+            //Toast.makeText(context, path.getAbsolutePath(), Toast.LENGTH_LONG).show();
+        }
 
+        File f = new File(path, "filename.txt");
+        if(!f.exists()){
+            try {
+                f.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        else{
+            Toast.makeText(context, path.getAbsolutePath(), Toast.LENGTH_LONG).show();
+
+        }
 
     }
 
-    class Updation extends AsyncTask <Void,Integer,String>{
 
-        @Override
-        protected String doInBackground(Void... voids) {
-            String re= UpdateRSSI();
+    public void Syncer(String s) {
+        File sdcard = Environment.getExternalStorageDirectory();
+        File unloadfile = new File(sdcard, "/RSSIDATA.txt");
+        if (!unloadfile.exists()) {
+            // unloadfile.delete();
+            try {
+                unloadfile.createNewFile();
+            } catch (Exception e) {
 
-
-            return re;
+            }
         }
 
-        @Override
-        protected void onPostExecute(String s) {
-            super.onPostExecute(s);
-            TextView tv=(TextView)findViewById(R.id.res);
-            s=s+"\n"+Calendar.getInstance().getTime().toString();
-            WriteFile(s,getApplicationContext());
-            tv.setText(s);
+        FileWriter fw = null;
+        try {
+            fw = new FileWriter(unloadfile, true);
 
+            fw.append(s);
+            fw.append(" -------  ----- \n");
+            fw.flush();
+            fw.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
+
+
+        class Updation extends AsyncTask<Void, Integer, String> {
+
+            @Override
+            protected String doInBackground(Void... voids) {
+                String re = UpdateRSSI();
+
+
+                return re;
+            }
+
+            @Override
+            protected void onPostExecute(String s) {
+                super.onPostExecute(s);
+                TextView tv = (TextView) findViewById(R.id.res);
+                s = s + "\n" + Calendar.getInstance().getTime().toString();
+                //WriteFile(s, getApplicationContext());
+                Syncer(s);
+                tv.setText(s);
+
+            }
+        }
+
 }
