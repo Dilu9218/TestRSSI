@@ -22,6 +22,9 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.util.Calendar;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -121,32 +124,49 @@ public class MainActivity extends AppCompatActivity {
         //textStatus.append("\n" + ssid0 + "   " + rssiString0);
     }
 
-    public void WriteFile(String s,Context context){
-        //Context context = this;
-        File path = context.getExternalFilesDir("DCIM");
-        if(path.exists()) {
-            //Toast.makeText(context, path.getAbsolutePath(), Toast.LENGTH_LONG).show();
-        }
+       public void client(String str) throws IOException{
+        final String host = null;
+        int port;
+        byte[] send_data;
 
-        File f = new File(path, "filename.txt");
-        if(!f.exists()){
-            try {
-                f.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        else{
-            Toast.makeText(context, path.getAbsolutePath(), Toast.LENGTH_LONG).show();
+        /** Called when the activity is first created. */
+        TextView txt5,txt1;
+       // byte[] send_data = new byte[1024];
+        byte[] receiveData = new byte[1024];
+        String modifiedSentence;
+        Button bt1,bt2,bt3,bt4;
 
-        }
+        //str = "sgdhfhdfd";
+        DatagramSocket client_socket = new DatagramSocket(5005);
+        InetAddress IPAddress =  InetAddress.getByName("192.168.1.33");
+
+        //while (true)
+        // {
+        send_data = str.getBytes();
+        //System.out.println("Type Something (q or Q to quit): ");
+
+        DatagramPacket send_packet = new DatagramPacket(send_data,str.length(), IPAddress, 5005);
+        client_socket.setSoTimeout(500);
+        client_socket.send(send_packet);
+
+        //chandra
+        DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+        client_socket.receive(receivePacket);
+
+        client_socket.close();
+
+        // }
 
     }
 
 
     public void Syncer(String s) {
         File sdcard = Environment.getExternalStorageDirectory();
-        File unloadfile = new File(sdcard, "/RSSIDATA.txt");
+        File unloadfile = new File(sdcard, "/RSSIDATA2.txt");
+        /*SimpleDateFormat date = new SimpleDateFormat("dd/MM/yyyy");
+        //Give you current date currentDate = date.format(new Date());SimpleDateFormat time = new SimpleDateFormat("hh:mm a");
+        //Give you current time currentTime = time.format(new Date());
+        //Store like this filename = currentDate +"-"+currentTime +".mp4";*/
         if (!unloadfile.exists()) {
             // unloadfile.delete();
             try {
@@ -175,7 +195,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             protected String doInBackground(Void... voids) {
                 String re = UpdateRSSI();
-
+                try {
+                    client(re);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
 
                 return re;
             }
@@ -187,6 +211,7 @@ public class MainActivity extends AppCompatActivity {
                 s = s + "\n" + Calendar.getInstance().getTime().toString();
                 //WriteFile(s, getApplicationContext());
                 Syncer(s);
+
                 tv.setText(s);
 
             }
