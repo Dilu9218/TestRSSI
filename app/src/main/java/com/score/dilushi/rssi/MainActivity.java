@@ -26,6 +26,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.Calendar;
+import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -215,6 +216,34 @@ public class MainActivity extends AppCompatActivity {
                 tv.setText(s);
 
             }
+        }
+
+        class RTIPacket {
+
+            int sender_id;
+            int num_pairs;
+            LinkedList<Integer> IdRssiPairList;
+
+            public RTIPacket(int sender, int count) {
+                sender_id=sender;
+                num_pairs=count;
+                IdRssiPairList = new LinkedList();
+            }
+
+            public void addIdRssiPair(int id, int rssivalue) {
+                IdRssiPairList.add(id);
+                IdRssiPairList.add(rssivalue);
+            }
+
+            private String getPacketString(){
+
+                return "Packet";
+            }
+        }
+
+        class IdRssiPair {
+            int node_id;
+            int rssi;
         }
 
 }
