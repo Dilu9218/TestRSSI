@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
 //Set how long before to start calling the TimerTask (in milliseconds)
                         0,
 //Set the amount of time between each execution (in milliseconds)
-                        5000);
+                        500);
             }
         });
     }
@@ -103,6 +103,12 @@ public class MainActivity extends AppCompatActivity {
 */
     public String UpdateRSSI(){
         WifiManager wifi = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+
+        // Asanka: we have to scan in each time we want to see new RSSI results
+        // for this line to work, we have to add following permissions
+        // "android.permission.ACCESS_WIFI_STATE" and "android.permission.CHANGE_WIFI_STATE"
+        wifi.startScan();
+
         String fullpath="";
         for (int i=0;i<wifi.getScanResults().size();i++) {
             ScanResult result0 = wifi.getScanResults().get(i);
