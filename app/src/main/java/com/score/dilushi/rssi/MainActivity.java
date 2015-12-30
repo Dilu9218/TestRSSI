@@ -124,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
         //textStatus.append("\n" + ssid0 + "   " + rssiString0);
     }
 
-       public void client(String str) throws IOException{
+    public void client(String str) throws IOException {
         final String host = null;
         int port;
         byte[] send_data;
@@ -137,26 +137,25 @@ public class MainActivity extends AppCompatActivity {
         Button bt1,bt2,bt3,bt4;
 
         //str = "sgdhfhdfd";
-        DatagramSocket client_socket = new DatagramSocket(5005);
-        InetAddress IPAddress =  InetAddress.getByName("192.168.1.33");
+        DatagramSocket client_socket = new DatagramSocket(10500);
+        InetAddress IPAddress =  InetAddress.getByName("192.168.43.97");
 
         //while (true)
         // {
         send_data = str.getBytes();
         //System.out.println("Type Something (q or Q to quit): ");
 
-        DatagramPacket send_packet = new DatagramPacket(send_data,str.length(), IPAddress, 5005);
+        DatagramPacket send_packet = new DatagramPacket(send_data,str.length(), IPAddress, 10500);
         client_socket.setSoTimeout(500);
         client_socket.send(send_packet);
 
         //chandra
-        DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-        client_socket.receive(receivePacket);
+        //DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+        //client_socket.receive(receivePacket);
 
         client_socket.close();
 
         // }
-
     }
 
 
@@ -197,6 +196,7 @@ public class MainActivity extends AppCompatActivity {
                 String re = UpdateRSSI();
                 try {
                     client(re);
+                    //client("Hello World!");
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -210,7 +210,7 @@ public class MainActivity extends AppCompatActivity {
                 TextView tv = (TextView) findViewById(R.id.res);
                 s = s + "\n" + Calendar.getInstance().getTime().toString();
                 //WriteFile(s, getApplicationContext());
-                Syncer(s);
+                //Syncer(s);
 
                 tv.setText(s);
 
