@@ -2,6 +2,7 @@ package com.score.dilushi.rssi;
 
 import android.content.Context;
 import android.net.wifi.ScanResult;
+import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -30,7 +31,12 @@ import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static android.app.PendingIntent.getActivity;
+
 public class MainActivity extends AppCompatActivity {
+
+    public String nodeMAC;
+    RTIPacket rtiPacket;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,8 +111,19 @@ public class MainActivity extends AppCompatActivity {
 
     }, 0, 1000);
 */
-    public String UpdateRSSI(){
+
+    public RTIPacket UpdateRSSI(){
+    //public String UpdateRSSI(){
+
+        rtiPacket = new RTIPacket();
+        //rtiPacket.addIdRssiPair(1, -20);
+        //rtiPacket.addIdRssiPair(2, -25);
+
         WifiManager wifi = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+
+        WifiInfo wifiInfo = wifi.getConnectionInfo();
+        nodeMAC = wifiInfo.getMacAddress();
+        rtiPacket.sender_id = nodeMAC;
 
         // Asanka: we have to scan in each time we want to see new RSSI results
         // for this line to work, we have to add following permissions
@@ -117,12 +134,20 @@ public class MainActivity extends AppCompatActivity {
         for (int i=0;i<wifi.getScanResults().size();i++) {
             ScanResult result0 = wifi.getScanResults().get(i);
             String ssid0 = result0.SSID;
+
+            String bssid0 = result0.BSSID;
+            //Toast.makeText(getApplicationContext(), "This is the toast", Toast.LENGTH_SHORT).show();
+            //Integer.valueOf(result0.BSSID);
             int rssi0 = result0.level;
+
+            rtiPacket.addIdRssiPair(bssid0, rssi0);
+
             String rssiString0 = String.valueOf(rssi0);
             fullpath=fullpath+" "+ssid0+" -> "+rssiString0+"\n";
         }
-        return fullpath;
-        //textStatus.append("\n" + ssid0 + "   " + rssiString0);
+
+        //return fullpath;
+        return rtiPacket;
     }
 
     public void client(String str) throws IOException {
@@ -194,15 +219,27 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             protected String doInBackground(Void... voids) {
-                String re = UpdateRSSI();
+                //String re = UpdateRSSI();
+                rtiPacket = UpdateRSSI();
+
                 try {
-                    client(re);
+                    //client(re);
                     //client("Hello World!");
+
+                    /*
+                    rtiPacket = new RTIPacket();
+                    rtiPacket.addIdRssiPair(1, -20);
+                    rtiPacket.addIdRssiPair(2, -25);
+                    client(rtiPacket.getPacketString());
+                    */
+                    client(rtiPacket.getPacketString());
+
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
 
-                return re;
+                //return re;
+                return rtiPacket.getPacketString();
             }
 
             @Override
@@ -212,38 +249,49 @@ public class MainActivity extends AppCompatActivity {
                 s = s + "\n" + Calendar.getInstance().getTime().toString();
                 //WriteFile(s, getApplicationContext());
                 //Syncer(s);
-
                 tv.setText(s);
-
             }
         }
 
         class RTIPacket {
 
-            int sender_id;
-            int num_pairs;
-            LinkedList<Integer> IdRssiPairList;
+            String sender_id;
+            //LinkedList<Integer> idList;
+            LinkedList<String> idStringList;
+            LinkedList<Integer> rssiList;
 
-            public RTIPacket(int sender, int count) {
-                sender_id=sender;
-                num_pairs=count;
-                IdRssiPairList = new LinkedList();
+            public RTIPacket() {
+                sender_id=nodeMAC;
+                //idList = new LinkedList();
+                idStringList = new LinkedList();
+                rssiList = new LinkedList();
             }
 
-            public void addIdRssiPair(int id, int rssivalue) {
-                IdRssiPairList.add(id);
-                IdRssiPairList.add(rssivalue);
+            //public void addIdRssiPair(int id, int rssivalue) {
+            public void addIdRssiPair(String id, int rssivalue) {
+                //idList.add(id);
+                idStringList.add(id);
+                rssiList.add(rssivalue);
+            }
+
+            private int getNumPairs() {
+                return rssiList.size();
             }
 
             private String getPacketString(){
 
-                return "Packet";
+                String packetString = "";
+
+                packetString = String.valueOf(sender_id) + " " + String.valueOf(getNumPairs()) + " ";
+
+                int size = rssiList.size();
+
+                for(int index=0; index<size; index++) {
+                    packetString = packetString + " " + String.valueOf(idStringList.get(index)) + " "
+                            + String.valueOf(rssiList.get(index) + " ");
+                }
+
+                return packetString;
             }
         }
-
-        class IdRssiPair {
-            int node_id;
-            int rssi;
-        }
-
 }
