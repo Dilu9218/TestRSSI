@@ -282,13 +282,13 @@ public class MainActivity extends AppCompatActivity {
 
                 String packetString = "";
 
-                packetString = String.valueOf(sender_id) + " " + String.valueOf(getNumPairs()) + " ";
+                packetString = String.valueOf(sender_id) + " " + String.valueOf(getNumPairs());
 
                 int size = rssiList.size();
 
                 for(int index=0; index<size; index++) {
                     packetString = packetString + " " + String.valueOf(idStringList.get(index)) + " "
-                            + String.valueOf(rssiList.get(index) + " ");
+                            + String.valueOf(rssiList.get(index));
                 }
 
                 return packetString;
