@@ -26,7 +26,9 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -34,13 +36,14 @@ import java.util.TimerTask;
 import static android.app.PendingIntent.getActivity;
 
 public class MainActivity extends AppCompatActivity {
-
+String filename="";
     public String nodeMAC;
     RTIPacket rtiPacket;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        generatefilename();
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -53,7 +56,14 @@ public class MainActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
+        Button cfile=(Button)findViewById(R.id.chngfile);
+        cfile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                generatefilename();
 
+            }
+        });
         Button b=(Button)findViewById(R.id.ref_button);
         b.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -76,7 +86,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-
+public void generatefilename(){
+    filename="RSSIdata";
+    SimpleDateFormat s = new SimpleDateFormat("ddMMyyyyhhmmss");
+    String format = s.format(new Date());
+    filename=filename+format+".txt";
+    Toast.makeText(getApplicationContext(),filename,Toast.LENGTH_LONG).show();
+}
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -112,8 +128,8 @@ public class MainActivity extends AppCompatActivity {
     }, 0, 1000);
 */
 
-    public RTIPacket UpdateRSSI(){
-    //public String UpdateRSSI(){
+    //public RTIPacket UpdateRSSI(){
+    public String UpdateRSSI(){
 
         rtiPacket = new RTIPacket();
         //rtiPacket.addIdRssiPair(1, -20);
@@ -139,15 +155,14 @@ public class MainActivity extends AppCompatActivity {
             //Toast.makeText(getApplicationContext(), "This is the toast", Toast.LENGTH_SHORT).show();
             //Integer.valueOf(result0.BSSID);
             int rssi0 = result0.level;
+            String rssiString0 = String.valueOf(rssi0);
+            fullpath=fullpath+" "+ssid0+" "+rssiString0+"\n";
 
             rtiPacket.addIdRssiPair(bssid0, rssi0);
-
-            String rssiString0 = String.valueOf(rssi0);
-            fullpath=fullpath+" "+ssid0+" -> "+rssiString0+"\n";
         }
-
-        //return fullpath;
-        return rtiPacket;
+        Syncer(fullpath);
+        return fullpath;
+        //return rtiPacket;
     }
 
     public void client(String str) throws IOException {
@@ -187,7 +202,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void Syncer(String s) {
         File sdcard = Environment.getExternalStorageDirectory();
-        File unloadfile = new File(sdcard, "/RSSIDATA2.txt");
+        File unloadfile = new File(sdcard, "/"+filename);
         /*SimpleDateFormat date = new SimpleDateFormat("dd/MM/yyyy");
         //Give you current date currentDate = date.format(new Date());SimpleDateFormat time = new SimpleDateFormat("hh:mm a");
         //Give you current time currentTime = time.format(new Date());
@@ -197,7 +212,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 unloadfile.createNewFile();
             } catch (Exception e) {
-
+                Toast.makeText(getApplicationContext(),e.getMessage(),Toast.LENGTH_LONG).show();
             }
         }
 
@@ -219,8 +234,8 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             protected String doInBackground(Void... voids) {
-                //String re = UpdateRSSI();
-                rtiPacket = UpdateRSSI();
+                String re = UpdateRSSI();
+                //rtiPacket = UpdateRSSI();
 
                 try {
                     //client(re);
@@ -238,8 +253,8 @@ public class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
 
-                //return re;
-                return rtiPacket.getPacketString();
+                return re;
+               // return rtiPacket.getPacketString();
             }
 
             @Override
@@ -288,7 +303,7 @@ public class MainActivity extends AppCompatActivity {
 
                 for(int index=0; index<size; index++) {
                     packetString = packetString + " " + String.valueOf(idStringList.get(index)) + " "
-                            + String.valueOf(rssiList.get(index));
+                            + String.valueOf(rssiList.get(index))+"\n";
                 }
 
                 return packetString;
