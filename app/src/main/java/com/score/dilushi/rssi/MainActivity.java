@@ -39,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
 String filename="";
     public String nodeMAC;
     RTIPacket rtiPacket;
+    Timer t;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +58,13 @@ String filename="";
             }
         });
         Button cfile=(Button)findViewById(R.id.chngfile);
+        Button stopbtn=(Button)findViewById(R.id.stop_button);
+        stopbtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
         cfile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -69,7 +77,7 @@ String filename="";
             @Override
             public void onClick(View view) {
 
-                Timer t = new Timer();
+                t = new Timer();
                 t.scheduleAtFixedRate(new TimerTask() {
 
                                           @Override
@@ -83,6 +91,16 @@ String filename="";
                         0,
 //Set the amount of time between each execution (in milliseconds)
                         500);
+            }
+        });
+        Button stop=(Button)findViewById(R.id.stop_button);
+        stop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //
+            t.cancel();
+                t.purge();
+                Toast.makeText(getApplicationContext(),"Stop clicked",Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -131,15 +149,15 @@ public void generatefilename(){
     //public RTIPacket UpdateRSSI(){
     public String UpdateRSSI(){
 
-        rtiPacket = new RTIPacket();
+        //rtiPacket = new RTIPacket();
         //rtiPacket.addIdRssiPair(1, -20);
         //rtiPacket.addIdRssiPair(2, -25);
 
         WifiManager wifi = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 
-        WifiInfo wifiInfo = wifi.getConnectionInfo();
-        nodeMAC = wifiInfo.getMacAddress();
-        rtiPacket.sender_id = nodeMAC;
+        //WifiInfo wifiInfo = wifi.getConnectionInfo();
+        //nodeMAC = wifiInfo.getMacAddress();
+        //rtiPacket.sender_id = nodeMAC;
 
         // Asanka: we have to scan in each time we want to see new RSSI results
         // for this line to work, we have to add following permissions
@@ -151,14 +169,14 @@ public void generatefilename(){
             ScanResult result0 = wifi.getScanResults().get(i);
             String ssid0 = result0.SSID;
 
-            String bssid0 = result0.BSSID;
+            //String bssid0 = result0.BSSID;
             //Toast.makeText(getApplicationContext(), "This is the toast", Toast.LENGTH_SHORT).show();
             //Integer.valueOf(result0.BSSID);
             int rssi0 = result0.level;
             String rssiString0 = String.valueOf(rssi0);
-            fullpath=fullpath+" "+ssid0+" "+rssiString0+"\n";
+            fullpath=fullpath+ssid0+","+rssiString0+"\n";  //print time in seconds at last
 
-            rtiPacket.addIdRssiPair(bssid0, rssi0);
+            //rtiPacket.addIdRssiPair(bssid0, rssi0);
         }
         Syncer(fullpath);
         return fullpath;
@@ -221,7 +239,7 @@ public void generatefilename(){
             fw = new FileWriter(unloadfile, true);
 
             fw.append(s);
-            fw.append(" -------  ----- \n");
+            fw.append(" ------------ \n");
             fw.flush();
             fw.close();
         } catch (IOException e) {
@@ -237,7 +255,7 @@ public void generatefilename(){
                 String re = UpdateRSSI();
                 //rtiPacket = UpdateRSSI();
 
-                try {
+                /*try {
                     //client(re);
                     //client("Hello World!");
 
@@ -246,12 +264,12 @@ public void generatefilename(){
                     rtiPacket.addIdRssiPair(1, -20);
                     rtiPacket.addIdRssiPair(2, -25);
                     client(rtiPacket.getPacketString());
-                    */
+
                     client(rtiPacket.getPacketString());
 
                 } catch (Exception e) {
                     e.printStackTrace();
-                }
+                } */
 
                 return re;
                // return rtiPacket.getPacketString();

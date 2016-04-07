@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/TestRSSI.iml" filepath="$PROJECT_DIR$/TestRSSI.iml" />
+      <module fileurl="file://$PROJECT_DIR$/TestRSSInew.iml" filepath="$PROJECT_DIR$/TestRSSInew.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>
