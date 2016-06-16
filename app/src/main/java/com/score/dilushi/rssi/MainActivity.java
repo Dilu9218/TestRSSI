@@ -7,10 +7,12 @@ import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.SystemClock;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.format.DateFormat;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -26,10 +28,12 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.sql.SQLOutput;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -40,6 +44,8 @@ String filename="";
     public String nodeMAC;
     RTIPacket rtiPacket;
     Timer t;
+    long gap=0;
+    boolean isupdated=false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,22 +55,47 @@ String filename="";
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        new NetworkTime().execute("asia.pool.ntp.org");
+        //new NetworkTime().execute("et.ntp.org");
+        //new NetworkTime().execute("");
+
+
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+
+                t = new Timer();
+                t.scheduleAtFixedRate(new TimerTask() {
+
+                                          @Override
+                                          public void run() {
+                                              //Called each time when 1000 milliseconds (1 second) (the period parameter)
+                                              //Called each time when 1000 milliseconds (1 second) (the period parameter)
+                                              Long tsLong = System.currentTimeMillis();
+
+                                              Long servertime;
+
+                                              if(isupdated){
+                                                  servertime=tsLong-gap;
+                                              }
+                                              else{
+                                                  servertime=tsLong;
+                                              }
+                                              System.out.println("servertime "+servertime);
+
+                                              new Updation().execute(String.valueOf(servertime));
+
+                                          }
+
+                                      },
+//Set how long before to start calling the TimerTask (in milliseconds)
+                        0,
+//Set the amount of time between each execution (in milliseconds)
+                        500);
             }
         });
         Button cfile=(Button)findViewById(R.id.chngfile);
-        Button stopbtn=(Button)findViewById(R.id.stop_button);
-        stopbtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-            }
-        });
         cfile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -83,7 +114,20 @@ String filename="";
                                           @Override
                                           public void run() {
                                               //Called each time when 1000 milliseconds (1 second) (the period parameter)
-                                              new Updation().execute();
+                                              Long tsLong = System.currentTimeMillis();
+
+                                              Long servertime;
+
+                                              if(isupdated){
+                                                  servertime=tsLong-gap;
+                                              }
+                                              else{
+                                                  servertime=tsLong;
+                                              }
+                                              System.out.println("servertime "+servertime);
+
+                                              new Updation().execute(String.valueOf(servertime));
+
                                           }
 
                                       },
@@ -97,19 +141,67 @@ String filename="";
         stop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //
-            t.cancel();
+                t.cancel();
                 t.purge();
-                Toast.makeText(getApplicationContext(),"Stop clicked",Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(), "Stop clicked", Toast.LENGTH_LONG).show();
             }
         });
     }
-public void generatefilename(){
+
+    class NetworkTime extends AsyncTask<String, Void, String> {
+
+        private Exception exception;
+
+        protected String doInBackground(String... urls) {
+            try {
+                SntpClient client = new SntpClient();
+                if (client.requestTime("10.22.196.12", 5000)) {
+                    long now = client.getNtpTime() + SystemClock.elapsedRealtime() - client.getNtpTimeReference();
+                    System.out.println("now=" + now);
+                    System.out.println("getNTPtime" + client.getNtpTime());
+                    System.out.println("elapsed time" + SystemClock.elapsedRealtime());
+                    System.out.println("getntptime reference" + client.getNtpTimeReference());
+
+                    return String.valueOf(now);
+                } else {
+                    System.out.println("NOT TAKEN");
+                }
+            } catch (Exception e) {
+                this.exception = e;
+                return e.getMessage();
+
+            }
+            return null;
+        }
+
+        protected void onPostExecute(String feed) {
+            // TODO: check this.exception
+            // TODO: do something with the feed
+            if(feed.isEmpty()){
+                return;
+            }
+            try {
+
+                Calendar cal = Calendar.getInstance(Locale.ENGLISH);
+                cal.setTimeInMillis(Long.parseLong(feed));
+                String date = DateFormat.format("dd-MM-yyyy hh:mm:ss:a", cal).toString();
+                Toast.makeText(getApplicationContext(), date, Toast.LENGTH_LONG).show();
+                Long tsLong = System.currentTimeMillis();
+                gap = tsLong - Long.parseLong(feed);
+                isupdated=true;
+            }
+            catch (Exception e){
+
+            }
+        }
+    }
+
+    public void generatefilename(){
     filename="RSSIdata";
     SimpleDateFormat s = new SimpleDateFormat("ddMMyyyyhhmmss");
     String format = s.format(new Date());
     filename=filename+format+".txt";
-    Toast.makeText(getApplicationContext(),filename,Toast.LENGTH_LONG).show();
+    Toast.makeText(getApplicationContext(), filename, Toast.LENGTH_LONG).show();
 }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -132,22 +224,9 @@ public void generatefilename(){
 
         return super.onOptionsItemSelected(item);
     }
-/*
-    //Declare the timer
-    Timer t = new Timer();
-    //Set the schedule function and rate
-    t.scheduleAtFixedRate(new TimerTask() {
-
-        @Override
-        public void run() {
-            //Called each time when 1000 milliseconds (1 second) (the period parameter)
-        }
-
-    }, 0, 1000);
-*/
 
     //public RTIPacket UpdateRSSI(){
-    public String UpdateRSSI(){
+    public String UpdateRSSI(String stime){
 
         //rtiPacket = new RTIPacket();
         //rtiPacket.addIdRssiPair(1, -20);
@@ -169,12 +248,13 @@ public void generatefilename(){
             ScanResult result0 = wifi.getScanResults().get(i);
             String ssid0 = result0.SSID;
 
+            String format = DateFormat.format("dd-MM-yyyy hh:mm:ss:a", Long.parseLong(stime)).toString();
             //String bssid0 = result0.BSSID;
             //Toast.makeText(getApplicationContext(), "This is the toast", Toast.LENGTH_SHORT).show();
             //Integer.valueOf(result0.BSSID);
             int rssi0 = result0.level;
             String rssiString0 = String.valueOf(rssi0);
-            fullpath=fullpath+ssid0+","+rssiString0+"\n";  //print time in seconds at last
+            fullpath=fullpath+ssid0+","+rssiString0+","+format+"\n";  //print time in seconds at last
 
             //rtiPacket.addIdRssiPair(bssid0, rssi0);
         }
@@ -182,14 +262,14 @@ public void generatefilename(){
         return fullpath;
         //return rtiPacket;
     }
-
+/*
     public void client(String str) throws IOException {
         final String host = null;
         int port;
         byte[] send_data;
 
         /** Called when the activity is first created. */
-        TextView txt5,txt1;
+      /*  TextView txt5,txt1;
        // byte[] send_data = new byte[1024];
         byte[] receiveData = new byte[1024];
         String modifiedSentence;
@@ -215,7 +295,7 @@ public void generatefilename(){
         client_socket.close();
 
         // }
-    }
+    } */
 
 
     public void Syncer(String s) {
@@ -248,11 +328,11 @@ public void generatefilename(){
     }
 
 
-        class Updation extends AsyncTask<Void, Integer, String> {
+        class Updation extends AsyncTask<String, Integer, String> {
 
             @Override
-            protected String doInBackground(Void... voids) {
-                String re = UpdateRSSI();
+            protected String doInBackground(String... a) {
+                String re = UpdateRSSI(a[0]);
                 //rtiPacket = UpdateRSSI();
 
                 /*try {
