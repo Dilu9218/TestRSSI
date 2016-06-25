@@ -155,7 +155,7 @@ String filename="";
         protected String doInBackground(String... urls) {
             try {
                 SntpClient client = new SntpClient();
-                if (client.requestTime("10.22.196.12", 5000)) {
+                if (client.requestTime("10.42.0.1" ,5000)) {
                     long now = client.getNtpTime() + SystemClock.elapsedRealtime() - client.getNtpTimeReference();
                     System.out.println("now=" + now);
                     System.out.println("getNTPtime" + client.getNtpTime());
